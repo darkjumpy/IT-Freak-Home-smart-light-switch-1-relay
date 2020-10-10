@@ -14,7 +14,7 @@ You will need:
 1. HI-LINK 5V power supply
 1. Screw terminal with 3 pins
 1. Universal PCB (Project of custom PCB soon)
-1. Already working IT Freak Home bridge
+1. Already working [IT Freak Home bridge](https://github.com/IT-freak-Jake/IT-Freak-Home-bridge) 
 
 ## -How to build it?
 You can connect parts like this:<br/>
