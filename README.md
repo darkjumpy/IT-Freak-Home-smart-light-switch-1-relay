@@ -21,16 +21,16 @@ You will need:
 
 ## -How to build it?
 Put all of your parts on the PCB like on the picture:<br/>
-<img src="/images/partsOnPcb.jpg" width="40vw"><br/>
+<img src="/images/partsOnPcb.jpg" width="400px"><br/>
 (In the picture is an older version of the PCB. Your PCB should have a place for a capacitor)
 On the bottom side of the PCB, you have named where witch cable should go.
 **(N-Neutral wire, LI-Live wire, LO-Light out)**<br/>
 
-Attach the bottom part of the casing to the PCB. The plastic thing on the middle should go into a crack in PCB.
-<img src="/images/bottomCasing.jpg" width="40vw">
+Attach the bottom part of the casing to the PCB. The plastic thing on the middle should go into a crack in PCB.<br/>
+<img src="/images/bottomCasing.jpg" width="400px"><br/>
 
-Now attach the top part of the casing. It should be attached to the power supply casing.
-<img src="/images/topCasing.jpg" width="40vw">
+Now attach the top part of the casing. It should be attached to the power supply casing.<br/>
+<img src="/images/topCasing.jpg" width="400px">
 
 ## -How to program it?
 Libraries you will need:
