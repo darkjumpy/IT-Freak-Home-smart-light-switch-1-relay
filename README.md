@@ -1,5 +1,5 @@
 # IT Freak Home smart light switch (1 relay)
-DIY, smart and relatively chip light switch.<br/>
+DIY, smart and relatively cheap light switch.<br/>
 (This project supports OTA)
 ## -What IT Freak Home exactly is?
 It was a private project of DIY smart home devices which I decide to publish as an open-source project.<br/>
