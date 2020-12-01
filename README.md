@@ -10,19 +10,27 @@ In my free time, I'm working on more smart devices for IT Freak Home so if you a
 
 ## -What do you need for a smart light switch?
 You will need:
-1. ESP8266 Wemos D1 MINI
+1. ESP8266 ESP-12E
+1. AMS1117 3.3V
+1. Capacitor 470uF 10V (6.3mm x 11mm)
 1. 5V SSR relay 
 1. HI-LINK 5V power supply
 1. Screw terminal with 3 pins
-1. Universal PCB (Project of custom PCB soon) 
+1. Custom PCB (You can download gerber files from this repository)
+1. 3D printed casing (You can download STL files from this repository)
 
 ## -How to build it?
-You can connect parts like this:<br/>
-**(N-Neutral wire, LI-Live wire, LO-Light out)**<br/>
-![Sketch](/images/sketch.jpg)
+Put all of your parts on the PCB like on the picture:<br/>
+![Parts on PCB](/images/partsOnPcb.jpg)
+(In the picture is an older version of the PCB. Your PCB should have a place for a capacitor)
+On the bottom side of the PCB, you have named where witch cable should go.
+**(N-Neutral wire, LI-Live wire, LO-Light out)**<br/><br/>
 
-You can put your parts on universal PCB like this:<br/>
-![Parts on universal PCB](/images/partsOnPCB.jpg)
+Attach the bottom part of the casing to the PCB. The plastic thing on the middle should go into a crack in PCB.
+![Bottom casing assembly](/images/bottomCasing.jpg)
+
+Now attach the top part of the casing. It should be attached to the power supply casing.
+![Top casing assembly](/images/topCasing.jpg)
 
 ## -How to program it?
 Libraries you will need:
@@ -33,7 +41,7 @@ Libraries you will need:
 1. [ArduinoOTA.h](https://www.arduino.cc/reference/en/libraries/arduinoota/)
 1. [EEPROM.h](https://www.arduino.cc/en/Reference/EEPROM)   
 
-Download "light-switch.ino"and set your WiFi and MQTT broker credentials. Now you can upload this program on your Wemos D1 MINI.<br/>
+Download "light-switch.ino"and set your WiFi and MQTT broker credentials. Connect programming pins to USB-UART converter and USB-UART converter to the PC Now you can upload this program on your ESP-12E.<br/>
 (If you don't have ESP8266 boards installed in your Arduino IDE check this https://github.com/esp8266/Arduino)<br/>
 Open serial monitor on 115200 baud and note somewhere state topic and command topic.
 On these topics, your node will publish state and receive commands.
@@ -43,8 +51,8 @@ On these topics, your node will publish state and receive commands.
 * **Turn off the power in your home**
 * Disassemble your normal light switch
 * If you don't have a neutral wire in your electrical box ask the electrician about adding one
-* Connect electric wires to screw terminal (On sketch you can see where which wire should go)
-* Put the smart switch to the electrical box and connect the normal light switch to the smart switch (Like on the sketch)
+* Connect electric wires to screw terminal (On bottom of the PCB you can see where which wire should go)
+* Put the smart switch to the electrical box and connect the normal light switch to the smart switch (To the switch pins on PCB)
 * Assemble your normal light switch to the wall 
 
 ## -How to configure it with [Home Assistant](https://www.home-assistant.io/)?
@@ -67,7 +75,8 @@ switch:
    icon: "mdi:lightbulb"
    ```
     
-Add your smart light switch to the lovelace card.<br/>
+Restart Home Assistant and
+add your smart light switch to the lovelace card.<br/>
 **Now your device is ready to use!!!** :tada:<br/>
 
 ## -If you would like you can buy me a coffee :D
