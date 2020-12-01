@@ -41,7 +41,7 @@ Libraries you will need:
 1. [ArduinoOTA.h](https://www.arduino.cc/reference/en/libraries/arduinoota/)
 1. [EEPROM.h](https://www.arduino.cc/en/Reference/EEPROM)   
 
-Download "light-switch.ino"and set your WiFi and MQTT broker credentials. Connect programming pins to USB-UART converter and USB-UART converter to the PC Now you can upload this program on your ESP-12E.<br/>
+Download "light-switch.ino"and set your WiFi and MQTT broker credentials. Connect D0 to GND and programming pins to USB-UART converter and USB-UART converter to the PC. Now you can upload this program on your ESP-12E.<br/>
 (If you don't have ESP8266 boards installed in your Arduino IDE check this https://github.com/esp8266/Arduino)<br/>
 Open serial monitor on 115200 baud and note somewhere state topic and command topic.
 On these topics, your node will publish state and receive commands.
