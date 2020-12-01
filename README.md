@@ -21,13 +21,13 @@ You will need:
 
 ## -How to build it?
 Put all of your parts on the PCB like on the picture:<br/>
-![Parts on PCB](/images/partsOnPcb.jpg)
+![Parts on PCB](/images/partsOnPcb.jpg)<br/>
 (In the picture is an older version of the PCB. Your PCB should have a place for a capacitor)
 On the bottom side of the PCB, you have named where witch cable should go.
-**(N-Neutral wire, LI-Live wire, LO-Light out)**<br/><br/>
+**(N-Neutral wire, LI-Live wire, LO-Light out)**<br/>
 
 Attach the bottom part of the casing to the PCB. The plastic thing on the middle should go into a crack in PCB.
-![Bottom casing assembly](/images/bottomCasing.jpg)
+![Bottom casing assembly](/images/bottomCasing.jpg)<br/>
 
 Now attach the top part of the casing. It should be attached to the power supply casing.
 ![Top casing assembly](/images/topCasing.jpg)
