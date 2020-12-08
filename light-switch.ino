@@ -1,6 +1,6 @@
 #include <ESP8266WiFi.h>    
 #include <PubSubClient.h>   
-#include <ESP8266mDNS.h>    
+#include <ESP8266mDNS.h>   
 #include <WiFiUdp.h>        
 #include <ArduinoOTA.h>     
 #include <EEPROM.h>
@@ -14,25 +14,23 @@
 #define mqtt_user "MQTT username"
 #define mqtt_password "MQTT password"
 
-// Pins configuration
-#define RELAY 14 //It's pin D5 for wemos D1 mini
-#define SWITCH 13 //It's pin D7 for wemos D1 mini
+#define RELAY 14
+#define SWITCH 13
 
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 
+// Start MQTT client
 WiFiClient espClient;
 PubSubClient mqtt_client(mqtt_server, 1883, mqttCallback, espClient);
 
 //WiFiServer TelnetServer(8266);
 
-void setup_wifi() 
-{
+void setup_wifi() {
   delay(10);
   Serial.print("Connecting to ");
   Serial.print(wifi_ssid);
   WiFi.begin(wifi_ssid, wifi_password);
-  while (WiFi.status() != WL_CONNECTED) 
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
@@ -44,16 +42,19 @@ void setup_wifi()
 boolean isLightOn=false, prevSwitchState, isOtaUploading=false;
 String nodeId, msg, command_topic, state_topic;
 unsigned long prevMillisMqttReconnect=0, intervalMqttReconnect=5000;
-int mqttReconnectCounter=0, addr = 0;
+int mqttReconnectCounter=0, addr = 0, addr2 = 1;
 
 void setup() 
 {
   EEPROM.begin(512);
   isLightOn=EEPROM.read(addr);
-  pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, isLightOn);
-  EEPROM.write(addr, false);
-  EEPROM.commit(); 
+  pinMode(RELAY, OUTPUT);
+  if(isLightOn==true)
+  {
+    EEPROM.write(addr, false);
+    EEPROM.commit(); 
+  } 
 
   pinMode(SWITCH, INPUT_PULLUP);
   
@@ -62,11 +63,15 @@ void setup()
   nodeId=String(ESP.getChipId());
   String hostName="LightSwitch-"+nodeId;
   ArduinoOTA.setHostname(hostName.c_str());
+
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, LOW);
+  pinMode(SWITCH, INPUT_PULLUP);
  
   setup_wifi();
 
   Serial.print("Configuring OTA device...");
-  //TelnetServer.begin();
+//  TelnetServer.begin();   
   ArduinoOTA.onStart([]() {Serial.println("OTA starting...");isOtaUploading=true;});
   ArduinoOTA.onEnd([]() {Serial.println("OTA update finished!");Serial.println("Rebooting...");});
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {Serial.printf("OTA in progress: %u%%\r\n", (progress / (total / 100)));}); 
@@ -107,6 +112,9 @@ void mqtt_reconnect()
       {
         Serial.println("connected");
         mqtt_client.subscribe(command_topic.c_str());
+        mqtt_client.subscribe("homeassistant/status");
+        msg = isLightOn ? "ON":"OFF";
+        mqtt_client.publish(state_topic.c_str(), msg.c_str());
         mqttReconnectCounter=0;
       } 
       else 
@@ -115,13 +123,16 @@ void mqtt_reconnect()
         Serial.print(mqtt_client.state());
         Serial.println(" try again in 5 seconds");
         prevMillisMqttReconnect=millis();
-        if(mqttReconnectCounter>=3)
+        if(mqttReconnectCounter>=5)
         {
           WiFi.disconnect();
           Serial.println("Connection test failed. Restarting");
-          EEPROM.write(addr, isLightOn);
-          EEPROM.commit();
-          delay(100);
+          if(isLightOn!=EEPROM.read(addr))
+          {
+            EEPROM.write(addr, isLightOn);
+            EEPROM.commit();
+          }
+          delay(20);
           ESP.restart();
         }
       }
@@ -138,9 +149,7 @@ void loop()
   {
     isLightOn = !isLightOn;
     digitalWrite(RELAY, isLightOn);
-    //if(isLightOn){msg="ON";}
-    //else{msg="OFF";}
-    msg = isLightOn ? "ON" : "OFF";
+    msg = isLightOn ? "ON":"OFF";
     mqtt_client.publish(state_topic.c_str(), msg.c_str());
     delay(100);
     prevSwitchState=digitalRead(SWITCH);
@@ -154,8 +163,14 @@ void mqttCallback(char* topic, uint8_t* payload, unsigned int length)
   memcpy(cleanPayload, payload, length+1);
   String msg = String(cleanPayload);
   free(cleanPayload);
+  String Topic = topic;
   Serial.println("recived "+msg);
-  if(msg=="ON")
+  if(Topic=="homeassistant/status" && msg=="online")
+  {
+    msg = isLightOn ? "ON":"OFF";
+    mqtt_client.publish(state_topic.c_str(), msg.c_str());
+  }
+  else if(msg=="ON")
   {
     isLightOn=true;
     msg = "ON";
