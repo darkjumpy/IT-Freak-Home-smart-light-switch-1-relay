@@ -13,6 +13,8 @@ You will need:
 1. ESP8266 ESP-12E
 1. AMS1117 3.3V
 1. Capacitor 470uF 10V (6.3mm x 11mm)
+1. Varistor JVR14N391K
+1. Thermal fuze TZ-P115/2
 1. 5V SSR relay 
 1. HI-LINK 5V power supply
 1. Screw terminal with 3 pins
@@ -22,7 +24,7 @@ You will need:
 ## -How to build it?
 Put all of your parts on the PCB like on the picture:<br/>
 <img src="/images/partsOnPcb.jpg" width="400px"><br/>
-(In the picture is an older version of the PCB. Your PCB should have a place for a capacitor)
+(In the picture is an older version of the PCB. Your PCB should have a place for a capacitor, varistor and thermal fuze)
 On the bottom side of the PCB, you have named where witch cable should go.
 **(N-Neutral wire, LI-Live wire, LO-Light out)**<br/>
 
