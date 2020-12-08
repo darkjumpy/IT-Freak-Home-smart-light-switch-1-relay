@@ -42,14 +42,14 @@ void setup_wifi() {
 boolean isLightOn=false, prevSwitchState, isOtaUploading=false;
 String nodeId, msg, command_topic, state_topic;
 unsigned long prevMillisMqttReconnect=0, intervalMqttReconnect=5000;
-int mqttReconnectCounter=0, addr = 0, addr2 = 1;
+int mqttReconnectCounter=0, addr = 0;
 
 void setup() 
 {
+  pinMode(RELAY, OUTPUT);
   EEPROM.begin(512);
   isLightOn=EEPROM.read(addr);
   digitalWrite(RELAY, isLightOn);
-  pinMode(RELAY, OUTPUT);
   if(isLightOn==true)
   {
     EEPROM.write(addr, false);
@@ -63,10 +63,6 @@ void setup()
   nodeId=String(ESP.getChipId());
   String hostName="LightSwitch-"+nodeId;
   ArduinoOTA.setHostname(hostName.c_str());
-
-  pinMode(RELAY, OUTPUT);
-  digitalWrite(RELAY, LOW);
-  pinMode(SWITCH, INPUT_PULLUP);
  
   setup_wifi();
 
