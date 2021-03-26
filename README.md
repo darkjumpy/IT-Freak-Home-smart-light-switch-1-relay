@@ -36,7 +36,7 @@ Now attach the top part of the casing. It should be attached to the power supply
 ## -How to program it?
 You can simply upload the binary file or compile it on your own.<br/><br/>
 
-If you would like to compile it:<br/><br/>
+If you would like to compile it:<br/>
 
 Libraries you will need:
 1. StreamString.h
