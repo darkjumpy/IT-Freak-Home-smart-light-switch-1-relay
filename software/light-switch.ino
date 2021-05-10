@@ -1,12 +1,14 @@
 //I know the code is a little mess but it's waiting for cleanup ;)
-#define software_version "0.2.6"
+#include <modified-WiFiManager.h>
+
+#define software_version "0.2.7"
 #define compatible_hardware "ESP-12E"
 #define compatible_device "Single light switch"
 #define github_project_link "https://github.com/IT-freak-Jake/IT-Freak-Home-smart-light-switch-1-relay"
-#define confSize 512
+#define confSize 700
+#define mqttBufferSize 1024
 
 String host_name="LightSwitch-"+String(ESP.getChipId());
-String device_name_placeholder="placeholder=\""+host_name+"\"";
 
 #define light_on_state "ON"
 #define light_off_state "OFF"
@@ -17,8 +19,43 @@ String device_name_placeholder="placeholder=\""+host_name+"\"";
 #define RELAY 14
 #define SWITCH 13
 
-String command_topic, state_topic, attributes_topic, config_topic;
+String command_topic, state_topic, attributes_topic, config_topic, icon;
 boolean isLightOn=false, prevSwitchState;
+
+boolean isDynamicIconsEnabled=false;
+char icon_off[32]="mdi:lightbulb";
+char icon_on[32]="mdi:lightbulb-on";
+
+WiFiManagerParameter custom_enable_dynamic_icons("enable_dynamic_icons", "Enable dynamic icons", "f", 2, "type=\"checkbox\" style=\"width: 20px\" onchange=\"changeDynamicIcons()\"", WFM_LABEL_AFTER);
+WiFiManagerParameter custom_icon_off("icon_off", "Icon", icon_off, 31, "placeholder=\"mdi:lightbulb\"");
+WiFiManagerParameter custom_icon_on("icon_on", "Icon on ON", icon_on, 31, "placeholder=\"mdi:lightbulb-on\"");
+WiFiManagerParameter custom_icon_div("<div id=\"icon\" style=\"padding: 0px\">");
+WiFiManagerParameter custom_additional_js(R"(<script>
+document.getElementById("enable_dynamic_icons").checked = document.getElementById("enable_dynamic_icons").value=="t";
+var labels = document.getElementsByTagName('LABEL');
+for (var i = 0; i < labels.length; i++) {
+  if (labels[i].htmlFor != '') {
+     var elem = document.getElementById(labels[i].htmlFor);
+     if (elem)
+        elem.label = labels[i];         
+  }
+}
+changeDynamicIcons();
+function changeDynamicIcons()
+{
+  const isChecked=document.getElementById("enable_dynamic_icons").checked;
+  if(isChecked)
+  {
+    document.getElementById("icon_off").label.innerHTML = "Icon on OFF";
+    document.getElementById("icon").style.display = "initial";
+  }
+  else
+  {
+    document.getElementById("icon_off").label.innerHTML = "Icon";
+    document.getElementById("icon").style.display = "none";
+  }
+}
+</script>)");
 
 #include "IT_Freak_Home_essentials.h"
 
@@ -37,6 +74,7 @@ void WiFiManager::handleControl() {
       {
         msg = light_on_state;
         mqttClient.publish(state_topic, msg);
+        if(isDynamicIconsEnabled && isDiscoveryOn)resendConfig();
       }
       digitalWrite(RELAY, HIGH);
     }
@@ -47,12 +85,13 @@ void WiFiManager::handleControl() {
       {
         msg = light_off_state;
         mqttClient.publish(state_topic, msg);
+        if(isDynamicIconsEnabled && isDiscoveryOn)resendConfig();
       }
       digitalWrite(RELAY, LOW);
     }
   }
   
-  String page = getHTTPHead("Control"); // @token options @todo replace options with title
+  String page = getHTTPHead("Control");
   page += "<h1>";
   page += (device_user_name[0]!='\0'?device_user_name:host_name.c_str());
   page += "</h1>";
@@ -73,7 +112,66 @@ void WiFiManager::handleControl() {
 
   server->sendHeader(FPSTR(HTTP_HEAD_CL), String(page.length()));
   server->send(200, FPSTR(HTTP_HEAD_CT), page);
-  if(_preloadwifiscan) WiFi_scanNetworks(_scancachetime,true); // preload wifiscan throttled, async
+  if(_preloadwifiscan) WiFi_scanNetworks(_scancachetime,true); 
+}
+
+void addAdditionalParameters()
+{
+  wm.addParameter(&custom_br);
+  wm.addParameter(&custom_enable_dynamic_icons);
+  wm.addParameter(&custom_br);
+  wm.addParameter(&custom_br);
+  wm.addParameter(&custom_icon_off);
+  wm.addParameter(&custom_icon_div);
+  wm.addParameter(&custom_icon_on);
+  wm.addParameter(&custom_end_div);
+  wm.addParameter(&custom_additional_js);
+  wm.addParameter(&custom_hr);
+}
+
+void setAdditionalParameters()
+{
+  custom_enable_dynamic_icons.setValue(isDynamicIconsEnabled?"t":"f",2);
+  custom_icon_off.setValue(icon_off, 32);
+  custom_icon_on.setValue(icon_on, 32);
+  String stringBuffer;
+  if(icon_off[0]=='\0'){
+    stringBuffer="mdi:lightbulb";
+    stringBuffer.toCharArray(icon_off, 32);
+  }
+  if(icon_on[0]=='\0'){
+    stringBuffer="mdi:lightbulb-on";
+    stringBuffer.toCharArray(icon_on, 32);
+  }
+  icon=icon_off;
+}
+
+void reloadAdditionalParameters()
+{
+  String stringBuffer;
+  if(conf.containsKey("isDynamicIconsEnabled"))isDynamicIconsEnabled = conf["isDynamicIconsEnabled"];
+  if(conf.containsKey("icon_off"))
+  {
+    stringBuffer = conf["icon_off"].as<String>();
+    stringBuffer.toCharArray(icon_off, 32);
+  }
+  if(conf.containsKey("icon_on"))
+  {
+    stringBuffer = conf["icon_on"].as<String>();
+    stringBuffer.toCharArray(icon_on, 32);
+  }
+}
+
+void saveAdditionalParameters()
+{
+  if((strncmp(custom_enable_dynamic_icons.getValue(), "f", 1) == 0)==true || (strncmp(custom_enable_dynamic_icons.getValue(), "t", 1) == 0)==true){
+    conf["isDynamicIconsEnabled"]=true;}
+  else{
+    conf["isDynamicIconsEnabled"]=false;}
+  conf["icon_off"] = custom_icon_off.getValue();
+  Serial.println(conf["icon_off"].as<String>());
+  conf["icon_on"] = custom_icon_on.getValue();
+  Serial.println(conf["icon_on"].as<String>());
 }
 
 void pinsSetup()
@@ -101,7 +199,6 @@ void mqttStatusResend()
   Serial.println("Resending all MQTT messages");
   if(isDiscoveryOn)
   {
-    Serial.println("Sending auto discovery config");
     resendConfig();
     delay(20);
   }
@@ -124,6 +221,7 @@ void switch_handle()
     Serial.print("Light is ");  
     Serial.println(msg);  
     if(mqttClient.connected())mqttClient.publish(state_topic, msg);
+    if(isDynamicIconsEnabled && isDiscoveryOn && mqttClient.connected())resendConfig();
     delay(20);
     prevSwitchState=digitalRead(SWITCH);
   }  
@@ -131,6 +229,8 @@ void switch_handle()
 
 void resendConfig()
 {
+  Serial.println("Sending auto discovery config");
+  if(isDynamicIconsEnabled)icon=isLightOn?icon_on:icon_off;
   StaticJsonDocument<570> doc;
   StaticJsonDocument<128> doc2;
   String obj;
@@ -152,7 +252,7 @@ void resendConfig()
   doc["payload_off"] = light_off_command;
   doc["state_on"] = light_on_state;
   doc["state_off"] = light_off_state;
-  doc["icon"] = "mdi:lightbulb";
+  doc["icon"] = icon;
   serializeJson(doc, obj);
   Serial.println(config_topic);
   Serial.print("Sending auto discovery conf: "); Serial.println(obj);
@@ -180,6 +280,7 @@ void mqtt_message_handle(String topic, String payload)
     msg = light_on_state;
     mqttClient.publish(state_topic, msg);
     digitalWrite(RELAY, HIGH);
+    if(isDynamicIconsEnabled && isDiscoveryOn)resendConfig();
   }
   else if(payload==light_off_command)
   {
@@ -187,5 +288,6 @@ void mqtt_message_handle(String topic, String payload)
     msg = light_off_state;
     mqttClient.publish(state_topic, msg);
     digitalWrite(RELAY, LOW);
+    if(isDynamicIconsEnabled && isDiscoveryOn)resendConfig();
   }
 }
